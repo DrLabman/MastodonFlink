@@ -2,21 +2,101 @@ package net.gluonporridge;
 
 import com.google.gson.Gson;
 import com.sys1yagi.mastodon4j.MastodonClient;
+import com.sys1yagi.mastodon4j.api.Handler;
 import com.sys1yagi.mastodon4j.api.Pageable;
 import com.sys1yagi.mastodon4j.api.Range;
+import com.sys1yagi.mastodon4j.api.Shutdownable;
 import com.sys1yagi.mastodon4j.api.entity.Account;
+import com.sys1yagi.mastodon4j.api.entity.Notification;
 import com.sys1yagi.mastodon4j.api.entity.Status;
 import com.sys1yagi.mastodon4j.api.exception.Mastodon4jRequestException;
 import com.sys1yagi.mastodon4j.api.method.Public;
+import com.sys1yagi.mastodon4j.api.method.Streaming;
 import com.sys1yagi.mastodon4j.api.method.Timelines;
 import okhttp3.OkHttpClient;
 
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
+import org.apache.flink.streaming.api.functions.source.SourceFunction;
 
 public class LiveStream {
+
+    public static class MastodonSource extends RichSourceFunction<Status> {
+
+        private String accessToken;
+        MastodonClient client;
+        Streaming streaming;
+        Shutdownable shutdownable;
+
+        public MastodonSource(Properties config) {
+            accessToken = config.getProperty("accessToken");
+
+            if (accessToken == null) {
+                throw new IllegalArgumentException("accessToken must be set in configuration of MastodonSource");
+            }
+        }
+
+        @Override
+        public void open(Configuration parameters) throws Exception {
+            MastodonClient.Builder builder = new MastodonClient.Builder("mastodon.technology", new OkHttpClient.Builder(), new Gson());
+            builder.accessToken(accessToken).useStreamingApi();
+            client = builder.build();
+
+            streaming = new Streaming(client);
+
+//            timelines = new Timelines(client);
+//            publicObj = new Public(client);
+//            publicObj.getFederatedPublic();
+        }
+
+        @Override
+        public void run(SourceContext<Status> sourceContext) throws Exception {
+            try {
+                shutdownable = streaming.federatedPublic(new Handler () {
+
+                    @Override
+                    public void onDelete(long l) {
+
+                    }
+
+                    @Override
+                    public void onNotification(Notification notification) {
+
+                    }
+
+                    @Override
+                    public void onStatus(Status status) {
+                        sourceContext.collect(status);
+                    }
+                });
+                //Thread.sleep(10000L);
+                synchronized (this) {
+                    this.wait();
+                }
+            } catch(Mastodon4jRequestException ex) {
+                ex.printStackTrace();
+            } catch (InterruptedException ex) {
+                // Ignore
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            this.notify();
+            shutdownable.shutdown();
+        }
+
+        @Override
+        public void cancel() {
+            this.notify();
+        }
+    }
 
 	public static void main(String[] args) throws Exception {
         ParameterTool parameters = ParameterTool.fromArgs(args);
@@ -25,44 +105,40 @@ public class LiveStream {
 		// set up the streaming execution environment
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-		MastodonClient.Builder builder = new MastodonClient.Builder("mastodon.technology", new OkHttpClient.Builder(), new Gson());
-		builder.accessToken(accessToken);
-		MastodonClient client = builder.build();
+		Properties config = new Properties();
+		config.setProperty("accessToken", accessToken);
+        MastodonSource mastodonSource = new MastodonSource(config);
 
-		Timelines timelines = new Timelines(client);
-		Public publicObj = new Public(client);
+        env.setParallelism(1);
 
-		try {
-			Pageable<Status> statusPageable = publicObj.getFederatedPublic().execute();//timelines.getHome(new Range()).execute();
-			List<Status> statuses = statusPageable.getPart();
-			statuses.forEach(status->{
-				System.out.println("=============");
-				System.out.println(status.getApplication());
-				Account account = status.getAccount();
-				System.out.format("%1s (%2s) [%3s]\n", account.getDisplayName(), account.getAcct(), account.getId());
-				String content = status.getContent();
+        DataStreamSource<Status> streamSource = env.addSource(mastodonSource).setParallelism(1);
+
+        streamSource.addSink(status -> {
+            System.out.println("=============");
+            System.out.println(status.getCreatedAt());
+            if (status.getApplication() != null) {
+                System.out.println(status.getApplication());
+            }
+            Account account = status.getAccount();
+            System.out.format("%1s (%2s) [%3s]\n", account.getDisplayName(), account.getAcct(), account.getId());
+            String content = status.getContent();
 
 //                System.out.println(content);
-				// convert <br> tag to new line
-                String cleaned = String.join("\n", content.split("<br>"));
-				// remove junk around links
-                cleaned = cleaned.replaceAll("<a href=\"(.+?)\".*?</a>", "$1");
-				// convert <p> into paragraphs
-                cleaned = cleaned.replaceAll("<p>(.*?)</p>(?!$)", "$1\n\n");
-                cleaned = cleaned.replaceAll("<p>(.*?)</p>", "$1");
+            // convert <br> tag to new line
+            String cleaned = String.join("\n", content.split("<br>"));
+            // remove junk around links
+            cleaned = cleaned.replaceAll("<a href=\"(.+?)\".*?</a>", "$1");
+            // convert <p> into paragraphs
+            cleaned = cleaned.replaceAll("<p>(.*?)</p>(?!$)", "$1\n\n");
+            cleaned = cleaned.replaceAll("<p>(.*?)</p>", "$1");
 
-				// wrap after 80 char
-				//content = String.join("\n", content.split("(?<=\\G.{80})"));
+            // wrap after 80 char
+            //content = String.join("\n", content.split("(?<=\\G.{80})"));
 
-				System.out.println(cleaned);
-			});
-		} catch (Mastodon4jRequestException e) {
-			e.printStackTrace();
-		}
-
-		//"This is some text <a href=\"https://vulpine.club/tags/selfie\" class=\"mention hashtag\" rel=\"nofollow noopener\" target=\"_blank\">#<span>selfie</span></a> some more text"
+            System.out.println(cleaned);
+        });
 
 		// execute program
-		env.execute("Flink Streaming Java API Skeleton");
+		env.execute("Mastodon Source Test");
 	}
 }
