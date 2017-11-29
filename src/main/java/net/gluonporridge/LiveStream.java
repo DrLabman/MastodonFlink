@@ -9,6 +9,7 @@ import com.sys1yagi.mastodon4j.api.Shutdownable;
 import com.sys1yagi.mastodon4j.api.entity.Account;
 import com.sys1yagi.mastodon4j.api.entity.Notification;
 import com.sys1yagi.mastodon4j.api.entity.Status;
+import com.sys1yagi.mastodon4j.api.entity.Tag;
 import com.sys1yagi.mastodon4j.api.exception.Mastodon4jRequestException;
 import com.sys1yagi.mastodon4j.api.method.Public;
 import com.sys1yagi.mastodon4j.api.method.Streaming;
@@ -136,6 +137,18 @@ public class LiveStream {
             //content = String.join("\n", content.split("(?<=\\G.{80})"));
 
             System.out.println(cleaned);
+
+            List<Tag> tags = status.getTags();
+            if (tags.size() > 0) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Tags: ");
+                for (Tag t : tags) {
+                    sb.append(t.getName());
+                    sb.append(", ");
+                }
+                sb.delete(sb.length() - 2, sb.length() - 1);
+                System.out.println(sb.toString());
+            }
         });
 
 		// execute program
