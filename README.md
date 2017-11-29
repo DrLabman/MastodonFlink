@@ -38,11 +38,9 @@ By default the pipeline is set to use the Federated Timeline. New Toots will be 
 
 The output will look like:
 
-'''
-=============
-2017-11-29T21:31:59.622Z
-hackaday (hackaday@apoil.org) [14490]
-RT @NeuroTinker: Our @kickstarter campaign is now live! NeuroBytes https://apoil.org/tags/neuron simulators and https://apoil.org/tags/curricula combine https://apoil.org/tags/neuroscience and…  source: https://twitter.com/hackaday/status/935984248430796800
-Tags: neuroscience, curricula, neuron 
-=============
-```
+    =============
+    2017-11-29T21:31:59.622Z
+    hackaday (hackaday@apoil.org) [14490]
+    RT @NeuroTinker: Our @kickstarter campaign is now live! NeuroBytes https://apoil.org/tags/neuron simulators and https://apoil.org/tags/curricula combine https://apoil.org/tags/neuroscience and…  source: https://twitter.com/hackaday/status/935984248430796800
+    Tags: neuroscience, curricula, neuron 
+    =============
