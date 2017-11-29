@@ -30,22 +30,29 @@ public class LiveStream {
 
     public static class MastodonSource extends RichSourceFunction<Status> {
 
+        private String instance;
         private String accessToken;
+
         MastodonClient client;
         Streaming streaming;
         Shutdownable shutdownable;
 
         public MastodonSource(Properties config) {
             accessToken = config.getProperty("accessToken");
+            instance = config.getProperty("instance");
 
             if (accessToken == null) {
                 throw new IllegalArgumentException("accessToken must be set in configuration of MastodonSource");
+            }
+
+            if (instance == null) {
+                throw new IllegalArgumentException("instance must be set in configuration of MastodonSource");
             }
         }
 
         @Override
         public void open(Configuration parameters) throws Exception {
-            MastodonClient.Builder builder = new MastodonClient.Builder("mastodon.technology", new OkHttpClient.Builder(), new Gson());
+            MastodonClient.Builder builder = new MastodonClient.Builder(instance, new OkHttpClient.Builder(), new Gson());
             builder.accessToken(accessToken).useStreamingApi();
             client = builder.build();
 
@@ -102,12 +109,14 @@ public class LiveStream {
 	public static void main(String[] args) throws Exception {
         ParameterTool parameters = ParameterTool.fromArgs(args);
         String accessToken = parameters.getRequired("accessToken");
+        String instance = parameters.getRequired("instance");
 
 		// set up the streaming execution environment
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
 		Properties config = new Properties();
 		config.setProperty("accessToken", accessToken);
+		config.setProperty("instance", instance);
         MastodonSource mastodonSource = new MastodonSource(config);
 
         env.setParallelism(1);
