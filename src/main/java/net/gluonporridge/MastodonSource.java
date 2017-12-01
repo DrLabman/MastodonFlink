@@ -16,8 +16,15 @@ import java.util.Properties;
 
 public class MastodonSource extends RichSourceFunction<Status> {
 
+    public enum MastodonTimeline {
+        FEDERATED_PUBLIC,
+        LOCAL_PUBLIC,
+        USER
+    }
+
     private String instance;
     private String accessToken;
+    private MastodonTimeline timeline;
 
     MastodonClient client;
     Streaming streaming;
@@ -26,6 +33,9 @@ public class MastodonSource extends RichSourceFunction<Status> {
     public MastodonSource(Properties config) {
         accessToken = config.getProperty("accessToken");
         instance = config.getProperty("instance");
+        String tl = config.getProperty("timeline", "FEDERATED_PUBLIC");
+        timeline = MastodonTimeline.valueOf(tl);
+
 
         if (accessToken == null) {
             throw new IllegalArgumentException("accessToken must be set in configuration of MastodonSource");
@@ -48,7 +58,7 @@ public class MastodonSource extends RichSourceFunction<Status> {
     @Override
     public void run(SourceContext<Status> sourceContext) throws Exception {
         try {
-            shutdownable = streaming.federatedPublic(new Handler() {
+            Handler handler = new Handler() {
 
                 @Override
                 public void onDelete(long l) {
@@ -64,8 +74,22 @@ public class MastodonSource extends RichSourceFunction<Status> {
                 public void onStatus(Status status) {
                     sourceContext.collect(status);
                 }
-            });
-            //Thread.sleep(10000L);
+            };
+
+            switch (timeline) {
+                case USER:
+                    shutdownable = streaming.user(handler);
+                    break;
+                case LOCAL_PUBLIC:
+                    shutdownable = streaming.localPublic(handler);
+                    break;
+                case FEDERATED_PUBLIC:
+                    shutdownable = streaming.federatedPublic(handler);
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown timeline type");
+            }
+            
             synchronized (this) {
                 this.wait();
             }
