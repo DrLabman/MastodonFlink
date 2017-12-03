@@ -1,6 +1,5 @@
 package net.gluonporridge;
 
-
 import com.sys1yagi.mastodon4j.api.entity.*;
 
 import java.util.List;
@@ -12,8 +11,6 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 
 public class LiveStream {
-
-
 
 	public static void main(String[] args) throws Exception {
         ParameterTool parameters = ParameterTool.fromArgs(args);
@@ -52,8 +49,6 @@ public class LiveStream {
                 MastodonHelper.printTags(status);
                 MastodonHelper.printAttachments(status);
             }
-
-
         });
 
 		// execute program
