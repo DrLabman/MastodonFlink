@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
+@NamedQuery(name="GetLatest",query="Select s From Status s Order By createdAt asc")
 public class Status {
 
     @Id

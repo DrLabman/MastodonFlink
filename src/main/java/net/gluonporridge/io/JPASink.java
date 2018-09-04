@@ -41,7 +41,7 @@ public class JPASink extends RichSinkFunction<Status> {
         System.out.print("Saving...");
 
         entityManager.getTransaction().begin();
-        entityManager.persist(status);
+        entityManager.merge(status);
         entityManager.getTransaction().commit();
 
         System.out.println("Done");
