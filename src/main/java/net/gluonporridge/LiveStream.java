@@ -1,62 +1,45 @@
 package net.gluonporridge;
 
-
-import com.sys1yagi.mastodon4j.api.entity.*;
-
-import java.util.List;
 import java.util.Properties;
 
+import net.gluonporridge.io.JPASink;
+import net.gluonporridge.io.MastodonSource;
+import net.gluonporridge.io.StatusConsoleSink;
+import net.gluonporridge.jpa.*;
+import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 
 public class LiveStream {
 
-
-
-	public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception {
         ParameterTool parameters = ParameterTool.fromArgs(args);
         String accessToken = parameters.getRequired("accessToken");
         String instance = parameters.getRequired("instance");
 
-		// set up the streaming execution environment
-		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        // set up the streaming execution environment
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-		Properties config = new Properties();
-		config.setProperty("accessToken", accessToken);
-		config.setProperty("instance", instance);
+        Properties config = new Properties();
+        config.setProperty("accessToken", accessToken);
+        config.setProperty("instance", instance);
         MastodonSource mastodonSource = new MastodonSource(config);
 
         env.setParallelism(1);
 
-        DataStreamSource<Status> streamSource = env.addSource(mastodonSource).setParallelism(1);
+        DataStreamSource<com.sys1yagi.mastodon4j.api.entity.Status> streamSource = env.addSource(mastodonSource).setParallelism(1);
+        streamSource
+                .map(new MapFunction<com.sys1yagi.mastodon4j.api.entity.Status, Status>() {
+                    @Override
+                    public Status map(com.sys1yagi.mastodon4j.api.entity.Status status) throws Exception {
+                        return new Status(status);
+                    }
+                })
+                .addSink(new JPASink());
+                //.addSink(new StatusConsoleSink());
 
-        streamSource.addSink(new SinkFunction<Status>() {
-            @Override
-            public void invoke(Status status) throws Exception {
-                System.out.println("=============");
-                System.out.println(status.getCreatedAt());
-                if (status.getApplication() != null) {
-                    System.out.println(status.getApplication());
-                }
-                Account account = status.getAccount();
-                MastodonHelper.printAccount(account);
-
-                if (status.getInReplyToId() != null) {
-                    System.out.println(String.format("In Reply To: %1d", status.getInReplyToId()));
-                }
-
-                MastodonHelper.printMentions(status);
-                MastodonHelper.printContent(status);
-                MastodonHelper.printTags(status);
-                MastodonHelper.printAttachments(status);
-            }
-
-
-        });
-
-		// execute program
-		env.execute("Mastodon Source Test");
-	}
+        // execute program
+        env.execute("Mastodon Source Test");
+    }
 }

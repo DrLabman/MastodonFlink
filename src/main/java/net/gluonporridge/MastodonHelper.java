@@ -1,11 +1,11 @@
 package net.gluonporridge;
 
-import com.sys1yagi.mastodon4j.api.entity.*;
+import net.gluonporridge.jpa.*;
 
 import java.util.List;
 
 public class MastodonHelper {
-    static void printAccount(Account acc) {
+    public static void printAccount(Account acc) {
 //        id 	The ID of the account 	no
 //        username 	The username of the account 	no
 //        acct 	Equals username for local users, includes @domain for remote ones 	no
@@ -69,9 +69,6 @@ public class MastodonHelper {
         cleaned = cleaned.replaceAll("<a href=\"(.+?)\".*?</a>", "$1");
 
         System.out.println(cleaned);
-
-
-
 
 //        // convert <p> into paragraphs
 //        cleaned = cleaned.replaceAll("<p>(.*?)</p>(?!$)", "$1\n\n");

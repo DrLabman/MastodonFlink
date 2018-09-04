@@ -44,3 +44,6 @@ The output will look like:
     RT @NeuroTinker: Our @kickstarter campaign is now live! NeuroBytes https://apoil.org/tags/neuron simulators and https://apoil.org/tags/curricula combine https://apoil.org/tags/neuroscience and…  source: https://twitter.com/hackaday/status/935984248430796800
     Tags: neuroscience, curricula, neuron 
     =============
+
+## Output To MongoDB
+Going to store full records in MongoDB for use in a test interface.

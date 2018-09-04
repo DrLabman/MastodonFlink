@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mastodon Test</title>
+    <script src="dist/js/main.js"></script>
+    <!-- in index.html, or however you manage your CSS files -->
+    <link href="./node_modules/normalize.css/normalize.css" rel="stylesheet" />
+    <!-- blueprint-icons.css file must be included alongside blueprint.css! -->
+    <link href="./node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css" rel="stylesheet" />
+    <link href="./node_modules/@blueprintjs/core/lib/css/blueprint.css" rel="stylesheet" />
+    <!-- add other blueprint-*.css files here -->
+</head>
+<body>
+    <nav class="bp3-navbar bp3-dark">
+        <div style="margin: 0 auto; width: 480px;"> <!-- ADD ME -->
+            <div class="bp3-navbar-group bp3-align-left">
+                <div class="bp3-navbar-heading">Mastodon Testing</div>
+            </div>
+            <div class="bp3-navbar-group bp3-align-right">
+                <button class="bp3-button bp3-minimal bp3-icon-home">Home</button>
+                <button class="bp3-button bp3-minimal bp3-icon-document">Files</button>
+                <span class="bp3-navbar-divider"></span>
+                <button class="bp3-button bp3-minimal bp3-icon-user"></button>
+                <button class="bp3-button bp3-minimal bp3-icon-notifications"></button>
+                <button class="bp3-button bp3-minimal bp3-icon-cog"></button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="react-root"></div>
+</body>
+</html>

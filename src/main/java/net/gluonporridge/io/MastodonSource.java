@@ -1,4 +1,4 @@
-package net.gluonporridge;
+package net.gluonporridge.io;
 
 import com.google.gson.Gson;
 import com.sys1yagi.mastodon4j.MastodonClient;
@@ -26,16 +26,15 @@ public class MastodonSource extends RichSourceFunction<Status> {
     private String accessToken;
     private MastodonTimeline timeline;
 
-    MastodonClient client;
-    Streaming streaming;
-    Shutdownable shutdownable;
+    private MastodonClient client;
+    private Streaming streaming;
+    private Shutdownable shutdownable;
 
     public MastodonSource(Properties config) {
         accessToken = config.getProperty("accessToken");
         instance = config.getProperty("instance");
-        String tl = config.getProperty("timeline", "FEDERATED_PUBLIC");
+        String tl = config.getProperty("timeline", "USER");
         timeline = MastodonTimeline.valueOf(tl);
-
 
         if (accessToken == null) {
             throw new IllegalArgumentException("accessToken must be set in configuration of MastodonSource");
