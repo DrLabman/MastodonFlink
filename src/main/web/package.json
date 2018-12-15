@@ -23,6 +23,7 @@
     },
     "dependencies": {
         "@blueprintjs/core": "^3.4.0",
+        "moment": "^2.22.2",
         "reflexbox": "^3.0.1"
     }
 }

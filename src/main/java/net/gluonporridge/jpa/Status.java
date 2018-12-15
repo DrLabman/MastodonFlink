@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@NamedQuery(name="GetLatest",query="Select s From Status s Order By createdAt asc")
+@NamedQuery(name="GetLatestStatuses",query="Select s From Status s Where s.reblog is null Order By createdAt desc")
+@NamedQuery(name="GetLatestBoosts",query="Select s From Status s Where s.reblog is not null Order By createdAt desc")
 public class Status {
 
     @Id
@@ -250,5 +251,14 @@ public class Status {
 
     public void setEmojis(List<Emoji> emojis) {
         this.emojis = emojis;
+    }
+
+    @Nullable
+    public Long getInReplyToAccountId() {
+        return inReplyToAccountId;
+    }
+
+    public void setInReplyToAccountId(@Nullable Long inReplyToAccountId) {
+        this.inReplyToAccountId = inReplyToAccountId;
     }
 }

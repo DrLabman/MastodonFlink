@@ -8,6 +8,7 @@ import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.PersistenceException;
 
 public class JPASink extends RichSinkFunction<Status> {
     private EntityManagerFactory sessionFactory;
@@ -40,11 +41,17 @@ public class JPASink extends RichSinkFunction<Status> {
         System.out.println("-------------");
         System.out.print("Saving...");
 
-        entityManager.getTransaction().begin();
-        entityManager.merge(status);
-        entityManager.getTransaction().commit();
+        try {
+            entityManager.getTransaction().begin();
+            entityManager.merge(status);
+            entityManager.getTransaction().commit();
 
-        System.out.println("Done");
+            System.out.println("Done");
+        } catch (PersistenceException pe) {
+            System.err.println(pe.toString());
+        } catch (IllegalStateException ese) {
+            System.err.println(ese.toString());
+        }
     }
 
     @Override
